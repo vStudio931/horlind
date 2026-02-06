@@ -3,28 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MINER TYCOON ULTIMATE</title>
+    <title>MINER TYCOON: SUPREME</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div id="exp-container"><div id="exp-bar"></div></div>
+    
     <div id="game-container">
         <div class="top-bar">
             <div class="stat">💰 <span id="money">0</span></div>
             <div class="stat">⚡ <span id="gps">0</span>/с</div>
+            <div class="stat">⭐ Ур. <span id="lvl-text">1</span></div>
         </div>
 
         <div id="screen-mine" class="screen">
             <div class="mine-area">
-                <div id="ore" onclick="handleMine()">💎</div>
+                <div id="ore" onclick="handleMine(event)">💎</div>
             </div>
-            <div class="bottom-nav">
-                <button class="nav-btn" onclick="changeScreen('shop')">МАГАЗИН 🛒</button>
-            </div>
+            <button class="nav-btn" onclick="changeScreen('shop')">МАГАЗИН 🛒</button>
         </div>
 
         <div id="screen-shop" class="screen hidden">
             <div class="shop-header">
-                <h2>МАГАЗИН</h2>
+                <h2>УЛУЧШЕНИЯ</h2>
                 <button class="close-btn" onclick="changeScreen('mine')">❌</button>
             </div>
             <div id="shop-list"></div>
