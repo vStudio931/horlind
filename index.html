@@ -1,77 +1,183 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
-    <title>Horror Simulator</title>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>VOID WALKER: THE RITUAL</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #000; font-family: sans-serif; }
-        canvas { display: block; touch-action: none; }
-        #ui { position: absolute; top: 10px; left: 10px; color: red; font-size: 18px; pointer-events: none; }
-        #mobile-controls { position: absolute; bottom: 20px; left: 20px; display: none; }
-        .btn { width: 60px; height: 60px; background: rgba(255,0,0,0.2); border: 1px solid red; color: white; border-radius: 50%; }
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', monospace; color: white; }
+        canvas { display: block; filter: contrast(120%) brightness(80%); }
+        #ui { 
+            position: absolute; top: 20px; left: 20px; z-index: 10; 
+            pointer-events: none; text-shadow: 0 0 5px red; 
+        }
+        #vhs-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 2px, 3px 100%; pointer-events: none; z-index: 5;
+        }
+        #screamer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: black; display: none; z-index: 100;
+            justify-content: center; align-items: center;
+        }
+        #screamer img { width: 100%; height: 100%; object-fit: cover; filter: invert(1) contrast(200%); }
     </style>
 </head>
 <body>
-    <div id="ui">Найди выход... Он где-то рядом.</div>
+    <div id="vhs-overlay"></div>
+    <div id="ui">
+        <h2 id="status">СОБЕРИ ВСЕ ЗАПИСКИ: 0/5</h2>
+        <p id="hint">УПРАВЛЕНИЕ: WASD или СВАЙП</p>
+    </div>
+    <div id="screamer"><img src="https://i.imgur.com/vH9eH6U.jpg" alt="DIE"></div>
     <canvas id="game"></canvas>
 
-    <script>
-        const canvas = document.getElementById('game');
-        const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+<script>
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    const statusText = document.getElementById('status');
+    const screamer = document.getElementById('screamer');
 
-        let player = { x: 50, y: 50, size: 20, speed: 3 };
-        let monster = { x: 300, y: 300, active: false };
-        let exit = { x: canvas.width - 60, y: canvas.height - 60 };
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 
-        function draw() {
-            // Фон (тьма)
-            ctx.fillStyle = 'black';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // Игровые объекты
+    let player = { x: 100, y: 100, size: 10, speed: 3.5 };
+    let monster = { x: -500, y: -500, speed: 1.2, active: false };
+    let notes = [];
+    let walls = [];
+    let collectedNotes = 0;
+    let gameOver = false;
+    let glitchMode = 0;
 
-            // Фонарик (градиент)
-            let gradient = ctx.createRadialGradient(player.x, player.y, 10, player.x, player.y, 150);
-            gradient.addColorStop(0, 'rgba(255, 255, 200, 0.4)');
-            gradient.addColorStop(1, 'rgba(0, 0, 0, 1)');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // Создаем лабиринт и записки
+    function init() {
+        for(let i=0; i<5; i++) {
+            notes.push({
+                x: Math.random() * (canvas.width - 50) + 25,
+                y: Math.random() * (canvas.height - 50) + 25,
+                collected: false
+            });
+        }
+    }
 
-            // Игрок (едва виден)
-            ctx.fillStyle = '#333';
-            ctx.fillRect(player.x - 10, player.y - 10, 20, 20);
+    // Звуки (Web Audio API)
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playHeartbeat(vol) {
+        if(audioCtx.state === 'suspended') return;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.frequency.setValueAtTime(60, audioCtx.currentTime);
+        gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+    }
 
-            // Выход (мигает)
-            if (Math.random() > 0.9) {
-                ctx.fillStyle = 'darkred';
-                ctx.fillRect(exit.x, exit.y, 30, 30);
+    // Управление
+    let keys = {};
+    window.addEventListener('keydown', e => { 
+        keys[e.code] = true; 
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+    });
+    window.addEventListener('keyup', e => keys[e.code] = false);
+    
+    // Для телефонов
+    canvas.addEventListener('touchmove', e => {
+        player.x = e.touches[0].clientX;
+        player.y = e.touches[0].clientY;
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+    }, {passive: false});
+
+    function update() {
+        if(gameOver) return;
+
+        if(keys['KeyW'] || keys['ArrowUp']) player.y -= player.speed;
+        if(keys['KeyS'] || keys['ArrowDown']) player.y += player.speed;
+        if(keys['KeyA'] || keys['ArrowLeft']) player.x -= player.speed;
+        if(keys['KeyD'] || keys['ArrowRight']) player.x += player.speed;
+
+        // Логика монстра
+        if (collectedNotes > 0) {
+            monster.active = true;
+            let dx = player.x - monster.x;
+            let dy = player.y - monster.y;
+            let dist = Math.hypot(dx, dy);
+            
+            monster.speed = 1.2 + (collectedNotes * 0.4);
+            monster.x += (dx / dist) * monster.speed;
+            monster.y += (dy / dist) * monster.speed;
+
+            // Эффект помех при приближении
+            glitchMode = Math.max(0, 150 - dist) / 5;
+            if(Math.random() < 0.1) playHeartbeat(glitchMode / 20);
+
+            if(dist < 25) triggerDeath();
+        }
+
+        // Сбор записок
+        notes.forEach(n => {
+            if(!n.collected && Math.hypot(player.x - n.x, player.y - n.y) < 30) {
+                n.collected = true;
+                collectedNotes++;
+                statusText.innerText = `СОБЕРИ ВСЕ ЗАПИСКИ: ${collectedNotes}/5`;
+                if(collectedNotes === 5) {
+                    alert("ВЫХОД ОТКРЫТ! ТЫ ПОБЕДИЛ В ЭТОЙ ТЕМНОТЕ.");
+                    location.reload();
+                }
             }
+        });
+    }
 
-            requestAnimationFrame(draw);
-        }
+    function triggerDeath() {
+        gameOver = true;
+        screamer.style.display = 'flex';
+        setTimeout(() => location.reload(), 1500);
+    }
 
-        // Управление (ПК)
-        window.addEventListener('keydown', (e) => {
-            if(e.key === 'ArrowUp') player.y -= player.speed;
-            if(e.key === 'ArrowDown') player.y += player.speed;
-            if(e.key === 'ArrowLeft') player.x -= player.speed;
-            if(e.key === 'ArrowRight') player.x += player.speed;
-            checkScare();
+    function draw() {
+        // Тряска экрана от страха
+        let shakeX = (Math.random() - 0.5) * glitchMode;
+        let shakeY = (Math.random() - 0.5) * glitchMode;
+        ctx.setTransform(1, 0, 0, 1, shakeX, shakeY);
+
+        ctx.fillStyle = 'black';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Фонарик
+        let grad = ctx.createRadialGradient(player.x, player.y, 0, player.x, player.y, 200);
+        grad.addColorStop(0, 'rgba(255, 255, 255, 0.15)');
+        grad.addColorStop(1, 'rgba(0, 0, 0, 1)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Записки
+        ctx.fillStyle = 'white';
+        notes.forEach(n => {
+            if(!n.collected) {
+                ctx.save();
+                ctx.shadowBlur = 10; ctx.shadowColor = "white";
+                ctx.fillRect(n.x, n.y, 10, 14);
+                ctx.restore();
+            }
         });
 
-        // Управление (Телефон)
-        canvas.addEventListener('touchmove', (e) => {
-            player.x = e.touches[0].clientX;
-            player.y = e.touches[0].clientY;
-            checkScare();
-        });
-
-        function checkScare() {
-            let dist = Math.hypot(player.x - exit.x, player.y - exit.y);
-            if (dist < 30) alert("ТЫ ВЫЖИЛ...");
+        // Монстр (Тень)
+        if(monster.active) {
+            ctx.fillStyle = `rgba(${glitchMode * 10}, 0, 0, 0.6)`;
+            ctx.beginPath();
+            ctx.arc(monster.x, monster.y, 20 + glitchMode, 0, Math.PI*2);
+            ctx.fill();
         }
 
-        draw();
-    </script>
+        update();
+        requestAnimationFrame(draw);
+    }
+
+    init();
+    draw();
+</script>
 </body>
 </html>
