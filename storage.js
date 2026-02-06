@@ -2,32 +2,39 @@ const DB_NAME = 'MinerTycoonSupreme_v1';
 
 /**
  * Сохраняет текущее состояние игры в LocalStorage.
- * Вызывается автоматически каждые 5 секунд или при покупках.
  */
 function saveGame() {
     try {
         const data = {
+            // Базовые ресурсы
             money: state.money,
             gps: state.gps,
             clickPower: state.clickPower,
             inventory: state.inventory,
+            
+            // Прогресс уровней
             level: state.level,
             exp: state.exp,
             nextLevelExp: state.nextLevelExp,
-            // Сохраняем точное время выхода для расчета офлайн-добычи
+            
+            // НОВАЯ СТАТИСТИКА И ФИШКИ
+            totalClicks: state.totalClicks,
+            unlockedAchievements: state.unlockedAchievements,
+            lastWheelSpin: state.lastWheelSpin,
+            
+            // Время для офлайн-дохода
             lastSaveTime: Date.now() 
         };
         
         localStorage.setItem(DB_NAME, JSON.stringify(data));
-        console.log("Игра сохранена: " + new Date().toLocaleTimeString());
+        console.log("Прогресс сохранен успешно.");
     } catch (e) {
-        console.error("Не удалось сохранить игру:", e);
+        console.error("Ошибка сохранения:", e);
     }
 }
 
 /**
- * Загружает данные из LocalStorage при старте игры.
- * Возвращает объект с данными или null, если сохранения нет.
+ * Загружает данные при старте.
  */
 function loadGame() {
     try {
@@ -36,10 +43,11 @@ function loadGame() {
 
         const parsed = JSON.parse(data);
         
-        // Проверка на корректность данных
-        if (typeof parsed.money !== 'number') return null;
-
-        return parsed;
+        // Базовая валидация, чтобы не загрузить пустой файл
+        if (parsed && typeof parsed.money === 'number') {
+            return parsed;
+        }
+        return null;
     } catch (e) {
         console.error("Ошибка загрузки данных:", e);
         return null;
@@ -47,11 +55,11 @@ function loadGame() {
 }
 
 /**
- * Функция для полной очистки прогресса (если игрок захочет начать заново).
+ * Полный сброс игры.
  */
 function resetProgress() {
-    if (confirm("Вы уверены? Весь ваш прогресс будет безвозвратно удален!")) {
+    if (confirm("Внимание! Весь ваш прогресс, достижения и золото будут удалены безвозвратно. Продолжить?")) {
         localStorage.removeItem(DB_NAME);
-        location.reload(); // Перезагружаем страницу для обнуления всех переменных
+        location.reload(); 
     }
 }
