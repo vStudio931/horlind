@@ -6,17 +6,18 @@ let state = {
     inventory: {},
     level: 1,
     exp: 0,
-    nextLevelExp: 100
+    nextLevelExp: 100,
+    lastSaveTime: Date.now()
 };
 
-// Запуск игры при загрузке страницы
+// Запуск игры
 function init() {
     const saved = loadGame();
     if (saved) {
         state = { ...state, ...saved };
+        calculateOfflineProgress();
     }
     
-    // Применяем внешний вид руды в зависимости от уровня
     updateOreVisual();
     updateDisplay();
     renderShop();
@@ -24,7 +25,31 @@ function init() {
     spawnBonus();
 }
 
-// Обработка клика по руде
+// Расчет дохода за время отсутствия
+function calculateOfflineProgress() {
+    const now = Date.now();
+    const diffInSeconds = Math.floor((now - state.lastSaveTime) / 1000);
+    
+    // Если игрока не было больше 10 секунд и у него есть пассивный доход
+    if (diffInSeconds > 10 && state.gps > 0) {
+        const offlineRate = 0.5; // 50% от обычного дохода
+        const gained = diffInSeconds * state.gps * offlineRate;
+        state.money += gained;
+        
+        // Показываем уведомление (можно заменить на красивое модальное окно)
+        setTimeout(() => {
+            alert(`С возвращением! Пока тебя не было (${formatTime(diffInSeconds)}), твои рабочие добыли ${Math.floor(gained).toLocaleString()} 💰`);
+        }, 500);
+    }
+}
+
+function formatTime(s) {
+    if (s < 60) return s + " сек.";
+    if (s < 3600) return Math.floor(s / 60) + " мин.";
+    return Math.floor(s / 3600) + " ч.";
+}
+
+// Клик по руде
 function handleMine(e) {
     const isCrit = Math.random() < 0.1; // 10% шанс крита
     const multiplier = isCrit ? 5 : 1;
@@ -33,13 +58,18 @@ function handleMine(e) {
     state.money += amount;
     state.exp += amount;
 
-    // Эффекты
+    // Эффект тряски при крите
+    if (isCrit) {
+        document.body.classList.add('shake');
+        setTimeout(() => document.body.classList.remove('shake'), 200);
+    }
+
     createPop(e.clientX, e.clientY, `+${amount}${isCrit ? '🔥' : ''}`, isCrit ? 'crit' : '');
     checkLevelUp();
     updateDisplay();
 }
 
-// Создание всплывающего текста
+// Всплывающие цифры
 function createPop(x, y, txt, cls) {
     const p = document.createElement('div');
     p.className = 'pop ' + cls;
@@ -47,34 +77,30 @@ function createPop(x, y, txt, cls) {
     p.style.top = y + 'px';
     p.innerText = txt;
     document.body.appendChild(p);
-    
-    // Удаляем элемент после завершения анимации
     setTimeout(() => p.remove(), 700);
 }
 
-// Проверка повышения уровня
+// Система уровней
 function checkLevelUp() {
     if (state.exp >= state.nextLevelExp) {
         state.level++;
         state.exp = 0;
-        state.nextLevelExp = Math.floor(state.nextLevelExp * 2.2); // Усложнение следующего уровня
+        state.nextLevelExp = Math.floor(state.nextLevelExp * 2.5);
         
         updateOreVisual();
-        createPop(window.innerWidth / 2, window.innerHeight / 2, "УРОВЕНЬ UP! ⭐", "crit");
+        createPop(window.innerWidth / 2, window.innerHeight / 2, "LEVEL UP! ⭐", "crit");
         saveGame();
     }
 }
 
-// Обновление картинки руды
 function updateOreVisual() {
-    const oreElement = document.getElementById('ore');
+    const ore = document.getElementById('ore');
     if (ORES && ORES.length > 0) {
-        const index = (state.level - 1) % ORES.length;
-        oreElement.innerText = ORES[index];
+        ore.innerText = ORES[(state.level - 1) % ORES.length];
     }
 }
 
-// Покупка в магазине
+// Магазин
 function buy(id) {
     const item = UPGRADES.find(u => u.id === id);
     const count = state.inventory[id] || 0;
@@ -83,37 +109,28 @@ function buy(id) {
     if (state.money >= cost) {
         state.money -= cost;
         state.inventory[id] = count + 1;
-
-        if (item.type === 'auto') {
-            state.gps += item.income;
-        } else {
-            state.clickPower += item.power;
-        }
-
+        
+        if (item.type === 'auto') state.gps += item.income;
+        else state.clickPower += item.power;
+        
         renderShop();
         updateDisplay();
         saveGame();
     }
 }
 
-// Отрисовка списка товаров
 function renderShop() {
     const list = document.getElementById('shop-list');
-    if (!list) return;
-
     list.innerHTML = UPGRADES.map(item => {
         const count = state.inventory[item.id] || 0;
         const cost = Math.floor(item.baseCost * Math.pow(1.15, count));
-        const canAfford = state.money >= cost;
-
         return `
             <div class="item">
                 <div class="info">
-                    <b>${item.name}</b> <span style="color: #888;">(${count})</span>
-                    <br>
-                    <small>${item.type === 'click' ? 'Клик: +' + item.power : 'Доход: +' + item.income + '/с'}</small>
+                    <b>${item.name}</b> (${count})<br>
+                    <small>${item.type === 'click' ? '+' + item.power : '+' + item.income + '/с'}</small>
                 </div>
-                <button onclick="buy('${item.id}')" ${!canAfford ? 'disabled' : ''}>
+                <button onclick="buy('${item.id}')" ${state.money < cost ? 'disabled' : ''}>
                     ${cost.toLocaleString()} 💰
                 </button>
             </div>
@@ -121,17 +138,16 @@ function renderShop() {
     }).join('');
 }
 
-// Обновление всех цифр на экране
+// Обновление интерфейса
 function updateDisplay() {
     document.getElementById('money').innerText = Math.floor(state.money).toLocaleString();
     document.getElementById('gps').innerText = state.gps.toFixed(1);
     document.getElementById('lvl-text').innerText = state.level;
-
-    // Полоска опыта
+    
     const progress = (state.exp / state.nextLevelExp) * 100;
     document.getElementById('exp-bar').style.width = progress + '%';
 
-    // Обновляем доступность кнопок в магазине без перерисовки всего списка
+    // Обновляем доступность кнопок
     const buttons = document.querySelectorAll('.item button');
     UPGRADES.forEach((item, i) => {
         const count = state.inventory[item.id] || 0;
@@ -140,53 +156,47 @@ function updateDisplay() {
     });
 }
 
-// Игровые циклы (доход и автосохранение)
+// Циклы игры
 function startLoops() {
-    // Начисление пассивного дохода 10 раз в секунду для плавности
+    // Начисление дохода
     setInterval(() => {
         if (state.gps > 0) {
-            const incomePerTick = state.gps / 10;
-            state.money += incomePerTick;
-            state.exp += incomePerTick / 2; // Опыт капает и от пассивки, но медленнее
-            checkLevelUp();
+            state.money += state.gps / 10;
             updateDisplay();
         }
     }, 100);
 
-    // Автосохранение каждые 15 секунд
-    setInterval(saveGame, 15000);
+    // Автосохранение
+    setInterval(() => {
+        state.lastSaveTime = Date.now();
+        saveGame();
+    }, 5000);
 }
 
-// Спавн случайного бонуса
+// Бонусы
 function spawnBonus() {
     setTimeout(() => {
         const b = document.createElement('div');
         b.className = 'bonus';
         b.innerText = '🎁';
-        b.style.top = (Math.random() * 60 + 20) + '%';
+        b.style.top = Math.random() * 70 + 10 + '%';
         document.body.appendChild(b);
 
         b.onclick = () => {
-            const reward = Math.floor(state.gps * 60 + 100); // Подарок за 1 минуту работы или миним. 100
-            state.money += reward;
-            createPop(window.innerWidth / 2, window.innerHeight / 2, `ПОДАРОК: +${reward} 💰`, 'crit');
+            const gift = Math.floor(state.gps * 60 + 50);
+            state.money += gift;
+            createPop(window.innerWidth / 2, window.innerHeight / 2, `+${gift} 💰`, 'crit');
             b.remove();
-            updateDisplay();
         };
 
-        // Удалить, если не кликнули
         setTimeout(() => { if (b.parentNode) b.remove(); }, 4000);
-        
-        spawnBonus(); // Зацикливаем спавн
-    }, 20000 + Math.random() * 20000);
+        spawnBonus();
+    }, 15000 + Math.random() * 20000);
 }
 
-// Переключение экранов
 function changeScreen(s) {
     document.getElementById('screen-mine').classList.toggle('hidden', s !== 'mine');
     document.getElementById('screen-shop').classList.toggle('hidden', s !== 'shop');
-    if (s === 'shop') renderShop();
 }
 
-// Старт
 init();
