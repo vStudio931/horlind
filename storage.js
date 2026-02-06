@@ -1,14 +1,20 @@
+const DB_NAME = 'MinerTycoonDB';
+
 function saveGame() {
-    const saveData = {
+    const data = {
         money: state.money,
-        inventory: state.inventory,
         gps: state.gps,
-        clickPower: state.clickPower
+        clickPower: state.clickPower,
+        inventory: state.inventory,
+        level: state.level,
+        exp: state.exp,
+        nextLevelExp: state.nextLevelExp
     };
-    localStorage.setItem('miner_ultimate_save', JSON.stringify(saveData));
+    localStorage.setItem(DB_NAME, JSON.stringify(data));
+    console.log("Игра сохранена");
 }
 
 function loadGame() {
-    const data = localStorage.getItem('miner_ultimate_save');
+    const data = localStorage.getItem(DB_NAME);
     return data ? JSON.parse(data) : null;
 }
