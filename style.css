@@ -38,7 +38,7 @@ body {
     background: rgba(26, 26, 26, 0.95);
     border-bottom: 2px solid #333;
     z-index: 100;
-    flex-shrink: 0; /* Не дает шапке сжиматься */
+    flex-shrink: 0;
 }
 
 .stat {
@@ -62,7 +62,6 @@ body {
     align-items: center;
     position: relative;
     overflow: hidden; 
-    /* ФИКС: Для магазинов прижимаем контент к верху, чтобы работал скролл */
     justify-content: flex-start; 
 }
 
@@ -90,21 +89,20 @@ body {
     50% { transform: translateY(-20px); }
 }
 
-/* МАГАЗИН И СПИСКИ - ФИКС СКРОЛЛА ДЛЯ ПК */
+/* МАГАЗИН И СПИСКИ - ФИКС СКРОЛЛА */
 .scrollable {
     width: 100%;
     max-width: 500px;
-    /* Высота: строго ограничиваем область, чтобы скролл активировался */
     height: calc(100vh - 130px); 
-    overflow-y: scroll !important; /* ПРИНУДИТЕЛЬНЫЙ скролл */
+    overflow-y: scroll !important; 
     overflow-x: hidden;
-    padding: 20px 20px 100px 20px; /* Отступ снизу, чтобы меню не закрывало кнопки */
+    padding: 20px 20px 100px 20px; 
     box-sizing: border-box;
     display: block; 
     -webkit-overflow-scrolling: touch;
 }
 
-/* Стилизация скроллбара для ПК (Chrome, Edge) */
+/* Стилизация скроллбара */
 .scrollable::-webkit-scrollbar {
     width: 8px;
 }
@@ -125,7 +123,7 @@ body {
     justify-content: space-between;
     align-items: center;
     border-left: 4px solid gold;
-    flex-shrink: 0; /* ФИКС: Элементы не сжимаются, заставляя контейнер скроллиться */
+    flex-shrink: 0;
 }
 
 .item button {
@@ -196,7 +194,7 @@ body {
     100% { opacity: 0; transform: translate(-50%, -120px) scale(1.3); }
 }
 
-/* Режим Лихорадки */
+/* РЕЖИМ ЛИХОРАДКИ */
 #frenzy-container {
     position: fixed;
     top: 50%; left: 50%;
@@ -230,7 +228,7 @@ body {
     75% { transform: translateX(10px); }
 }
 
-/* Колесо и бонусы */
+/* КОЛЕСО И БОНУСЫ */
 .wheel-box { text-align: center; margin-top: 30px; }
 #wheel-visual { font-size: 100px; margin: 20px; display: inline-block; }
 
@@ -255,4 +253,50 @@ body {
     border-radius: 30px;
     font-weight: bold;
     cursor: pointer;
+}
+
+/* --- НОВЫЕ СТИЛИ ДЛЯ ОБНОВЛЕНИЯ --- */
+
+/* Стиль для секции Престижа и Навыков */
+#screen-prestige h3 {
+    margin-top: 30px;
+    color: #bc13fe;
+    text-shadow: 0 0 10px rgba(188, 19, 254, 0.5);
+}
+
+#skills-list .item {
+    border-left: 4px solid #bc13fe; /* Фиолетовый цвет для навыков */
+    background: #25103d;
+}
+
+#skills-list button {
+    background: #bc13fe;
+}
+
+#skills-list button:disabled {
+    background: #444;
+}
+
+/* Анимация Гоблина */
+@keyframes goblinRun {
+    from { left: -100px; }
+    to { left: 110%; }
+}
+
+/* Визуал питомца */
+#pet-slot {
+    pointer-events: none;
+    animation: petFloat 4s ease-in-out infinite;
+}
+
+@keyframes petFloat {
+    0%, 100% { transform: translateY(0) rotate(5deg); }
+    50% { transform: translateY(-15px) rotate(-5deg); }
+}
+
+/* Достижения (заблокированные) */
+.item.locked {
+    opacity: 0.4;
+    filter: grayscale(1);
+    border-left-color: #555;
 }
