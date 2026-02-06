@@ -1,0 +1,16 @@
+{
+  "name": "Miner Tycoon: Ultimate",
+  "short_name": "MinerTycoon",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#0f0f0f",
+  "theme_color": "#ffd700",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://play-lh.googleusercontent.com/D80PC3iOkFs34GxDrqBubwG-apLXUMhUznAiXJdksao5r14jzH6DDBGKD6n7gQC_5A=w240-h480-rw",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
