@@ -1,0 +1,133 @@
+body {
+    margin: 0;
+    background: #121212;
+    color: #e0e0e0;
+    font-family: 'Segoe UI', sans-serif;
+    overflow: hidden;
+}
+
+#game-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.top-bar {
+    display: flex;
+    justify-content: space-around;
+    padding: 20px;
+    background: #1f1f1f;
+    border-bottom: 2px solid #333;
+}
+
+.stat {
+    font-size: 24px;
+    font-weight: bold;
+    color: #ffd700;
+}
+
+.screen {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.mine-area {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#ore {
+    font-size: 120px;
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.05s;
+}
+
+#ore:active {
+    transform: scale(0.85);
+}
+
+.bottom-nav {
+    padding: 30px;
+}
+
+.nav-btn {
+    padding: 15px 50px;
+    font-size: 18px;
+    background: #ffd700;
+    border: none;
+    border-radius: 30px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+#screen-shop {
+    background: #181818;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.shop-header {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+#shop-list {
+    width: 100%;
+    max-width: 500px;
+}
+
+.item {
+    background: #252525;
+    margin-bottom: 10px;
+    padding: 15px;
+    border-radius: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid #333;
+}
+
+.name {
+    font-weight: bold;
+    color: #fff;
+}
+
+.desc {
+    font-size: 12px;
+    color: #888;
+}
+
+.item button {
+    padding: 10px 20px;
+    background: #4caf50;
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.item button.locked {
+    background: #555;
+    opacity: 0.6;
+    cursor: not-allowed;
+}
