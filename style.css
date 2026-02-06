@@ -5,9 +5,10 @@ body {
     background: #0f0f0f;
     color: white;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    overflow: hidden; /* Запрещаем скролл всей страницы */
-    user-select: none; /* Запрещаем выделение текста */
-    touch-action: manipulation; /* Убираем задержку клика на мобилках */
+    overflow: hidden; 
+    user-select: none; 
+    touch-action: manipulation;
+    transition: background 1.5s ease; /* Для плавной смены фонов локаций */
 }
 
 /* ПОЛОСКА ОПЫТА */
@@ -17,7 +18,7 @@ body {
     background: #222;
     position: fixed;
     top: 0;
-    z-index: 1000;
+    z-index: 2000;
 }
 
 #exp-bar {
@@ -34,8 +35,9 @@ body {
     justify-content: space-around;
     align-items: center;
     padding: 15px 5px;
-    background: #1a1a1a;
+    background: rgba(26, 26, 26, 0.9);
     border-bottom: 2px solid #333;
+    z-index: 100;
 }
 
 .stat {
@@ -59,11 +61,10 @@ body {
     align-items: center;
     justify-content: center;
     position: relative;
+    padding-bottom: 80px; /* Место для нижнего меню */
 }
 
-.hidden {
-    display: none !important;
-}
+.hidden { display: none !important; }
 
 /* РУДА (ЦЕНТР) */
 .mine-area {
@@ -78,15 +79,29 @@ body {
     cursor: pointer;
     transition: transform 0.05s;
     animation: float 3s ease-in-out infinite;
+    z-index: 10;
 }
 
-#ore:active {
-    transform: scale(0.85);
-}
+#ore:active { transform: scale(0.85); }
 
 @keyframes float {
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-20px); }
+}
+
+/* ЧАСТИЦЫ (Particles) */
+.particle {
+    position: fixed;
+    background: gold;
+    pointer-events: none;
+    z-index: 1500;
+    border-radius: 2px;
+    animation: particleFly 0.8s ease-out forwards;
+}
+
+@keyframes particleFly {
+    0% { transform: translate(0,0) scale(1); opacity: 1; }
+    100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
 }
 
 /* ВСПЛЫВАЮЩИЕ ЦИФРЫ */
@@ -95,13 +110,13 @@ body {
     pointer-events: none;
     font-weight: 900;
     color: #ffd700;
-    z-index: 1001;
+    z-index: 1600;
     animation: flyUp 0.7s ease-out forwards;
 }
 
 .pop.crit {
     color: #ff4444;
-    font-size: 1.8rem;
+    font-size: 2rem;
     text-shadow: 0 0 10px rgba(255, 68, 68, 0.8);
 }
 
@@ -110,47 +125,79 @@ body {
     100% { opacity: 0; transform: translate(-50%, -120px) scale(1.3); }
 }
 
-/* ТРЯСКА ЭКРАНА */
-.shake {
-    animation: shakeAnim 0.2s ease-in-out;
+/* ЛИХОРАДКА (FRENZY) */
+#frenzy-container {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: linear-gradient(45deg, #ff0000, #ff8800);
+    padding: 20px 40px;
+    border-radius: 50px;
+    font-size: 24px;
+    font-weight: bold;
+    z-index: 3000;
+    box-shadow: 0 0 50px #ff0000;
+    cursor: pointer;
+    animation: pulse 0.5s infinite;
 }
+
+@keyframes pulse {
+    0% { transform: translate(-50%, -50%) scale(1); }
+    50% { transform: translate(-50%, -50%) scale(1.1); }
+}
+
+.frenzy-mode {
+    animation: rainbowBg 1s infinite !important;
+}
+
+@keyframes rainbowBg {
+    0% { filter: hue-rotate(0deg) brightness(1.2); }
+    100% { filter: hue-rotate(360deg) brightness(1.5); }
+}
+
+/* ТРЯСКА ЭКРАНА */
+.shake { animation: shakeAnim 0.2s ease-in-out; }
 
 @keyframes shakeAnim {
     0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-8px); }
-    75% { transform: translateX(8px); }
+    25% { transform: translateX(-10px); }
+    75% { transform: translateX(10px); }
 }
 
-/* МАГАЗИН */
-#screen-shop {
-    background: #121212;
-    justify-content: flex-start;
-    padding: 20px;
-    overflow-y: auto;
-}
-
-.shop-header {
+/* НИЖНЕЕ МЕНЮ НАВИГАЦИИ */
+.bottom-menu {
+    position: fixed;
+    bottom: 0;
     width: 100%;
-    max-width: 450px;
+    height: 70px;
+    background: #1a1a1a;
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
+    border-top: 2px solid #333;
+    z-index: 1000;
 }
 
-.close-btn {
-    background: #444;
+.bottom-menu button {
+    flex: 1;
+    background: none;
     border: none;
-    color: white;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
+    color: #888;
+    font-size: 24px;
     cursor: pointer;
+    transition: 0.2s;
 }
 
-#shop-list {
+.bottom-menu button:hover {
+    color: gold;
+    transform: translateY(-3px);
+}
+
+/* МАГАЗИН И СПИСКИ */
+.scrollable {
     width: 100%;
     max-width: 450px;
+    overflow-y: auto;
+    padding: 10px;
+    box-sizing: border-box;
 }
 
 .item {
@@ -163,9 +210,6 @@ body {
     align-items: center;
     border-left: 4px solid gold;
 }
-
-.item b { font-size: 1.1rem; }
-.item small { color: #888; }
 
 .item button {
     padding: 10px 15px;
@@ -180,20 +224,14 @@ body {
 .item button:disabled {
     background: #444;
     opacity: 0.5;
-    cursor: not-allowed;
 }
 
-/* КНОПКА ПЕРЕХОДА */
-.nav-btn {
-    margin-bottom: 40px;
-    padding: 15px 45px;
-    background: gold;
-    border: none;
-    border-radius: 30px;
-    font-weight: bold;
-    font-size: 1rem;
-    cursor: pointer;
-    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+/* КОЛЕСО УДАЧИ */
+.wheel-box { text-align: center; }
+#wheel-visual {
+    font-size: 100px;
+    margin: 20px;
+    display: inline-block;
 }
 
 /* БОНУСНЫЙ ПОДАРОК */
@@ -210,4 +248,14 @@ body {
 @keyframes bonusMove {
     0% { left: -60px; transform: rotate(0deg); }
     100% { left: 110%; transform: rotate(720deg); }
+}
+
+.nav-btn {
+    padding: 15px 45px;
+    background: gold;
+    border: none;
+    border-radius: 30px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
 }
