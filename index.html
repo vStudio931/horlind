@@ -4,12 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>MINER TYCOON: SUPREME</title>
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>MINER TYCOON: ULTIMATE</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div id="exp-container">
         <div id="exp-bar"></div>
+    </div>
+
+    <div id="frenzy-container" class="hidden" onclick="startFrenzy()">
+        🔥 ЛИХОРАДКА! 🔥
     </div>
     
     <div id="game-container">
@@ -23,19 +28,41 @@
             <div class="mine-area">
                 <div id="ore" onclick="handleMine(event)">💎</div>
             </div>
-            <div class="bottom-controls">
-                <button class="nav-btn" onclick="changeScreen('shop')">МАГАЗИН 🛒</button>
-            </div>
         </div>
 
         <div id="screen-shop" class="screen hidden">
-            <div class="shop-header">
-                <h2>УЛУЧШЕНИЯ</h2>
-                <button class="close-btn" onclick="changeScreen('mine')">❌</button>
+            <div class="header-area">
+                <h2>МАГАЗИН</h2>
             </div>
-            <div id="shop-list">
+            <div id="shop-list" class="scrollable">
                 </div>
         </div>
+
+        <div id="screen-achievements" class="screen hidden">
+            <div class="header-area">
+                <h2>ДОСТИЖЕНИЯ</h2>
+            </div>
+            <div id="achievements-list" class="scrollable">
+                </div>
+        </div>
+
+        <div id="screen-wheel" class="screen hidden">
+            <div class="header-area">
+                <h2>КОЛЕСО ФОРТУНЫ</h2>
+            </div>
+            <div class="wheel-box">
+                <div id="wheel-visual">🎁</div>
+                <button id="spin-btn" class="nav-btn" onclick="spinWheel()">КРУТИТЬ</button>
+                <p id="wheel-timer">Доступно!</p>
+            </div>
+        </div>
+
+        <nav class="bottom-menu">
+            <button onclick="changeScreen('mine')" title="Добыча">⛏️</button>
+            <button onclick="changeScreen('shop')" title="Магазин">🛒</button>
+            <button onclick="changeScreen('achievements')" title="Достижения">🏆</button>
+            <button onclick="changeScreen('wheel')" title="Удача">🎡</button>
+        </nav>
     </div>
 
     <script src="data.js"></script>
