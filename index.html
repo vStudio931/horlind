@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Horlind</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <style>
+    body{
+      margin:0;
+      background:black;
+      color:red;
+      font-family:Arial;
+      text-align:center;
+    }
+    h1{
+      margin-top:40px;
+      font-size:50px;
+      text-shadow:0 0 20px red;
+    }
+    button{
+      padding:15px 30px;
+      font-size:20px;
+      background:red;
+      color:black;
+      border:none;
+      border-radius:10px;
+      margin-top:30px;
+    }
+    #game{
+      margin-top:40px;
+      font-size:25px;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>HORLIND</h1>
+<p>Horror simulator</p>
+
+<button onclick="start()">Начать</button>
+
+<div id="game"></div>
+
+<script>
+function start(){
+  document.getElementById("game").innerHTML =
+  "🌑 Ты проснулся в тёмном месте...<br><br>👁 Кто-то наблюдает за тобой...";
+  
+  setTimeout(()=>{
+    document.getElementById("game").innerHTML += "<br><br>💀 БЕГИ";
+    document.body.style.background="darkred";
+  },4000);
+}
+</script>
+
+</body>
+</html>
