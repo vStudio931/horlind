@@ -1,62 +1,77 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Horlind</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <style>
-    body{
-      margin:0;
-      background:black;
-      color:red;
-      font-family:Arial;
-      text-align:center;
-    }
-
-    h1{
-      margin-top:40px;
-      font-size:50px;
-      text-shadow:0 0 25px red;
-    }
-
-    button{
-      padding:15px 30px;
-      font-size:20px;
-      background:red;
-      color:black;
-      border:none;
-      border-radius:10px;
-      margin-top:30px;
-      cursor:pointer;
-    }
-
-    #game{
-      margin-top:40px;
-      font-size:25px;
-    }
-  </style>
+    <title>Horror Simulator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <style>
+        body { margin: 0; overflow: hidden; background: #000; font-family: sans-serif; }
+        canvas { display: block; touch-action: none; }
+        #ui { position: absolute; top: 10px; left: 10px; color: red; font-size: 18px; pointer-events: none; }
+        #mobile-controls { position: absolute; bottom: 20px; left: 20px; display: none; }
+        .btn { width: 60px; height: 60px; background: rgba(255,0,0,0.2); border: 1px solid red; color: white; border-radius: 50%; }
+    </style>
 </head>
-
 <body>
+    <div id="ui">Найди выход... Он где-то рядом.</div>
+    <canvas id="game"></canvas>
 
-<h1>HORLIND</h1>
-<p>Horror simulator</p>
+    <script>
+        const canvas = document.getElementById('game');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
 
-<button onclick="start()">Начать игру</button>
+        let player = { x: 50, y: 50, size: 20, speed: 3 };
+        let monster = { x: 300, y: 300, active: false };
+        let exit = { x: canvas.width - 60, y: canvas.height - 60 };
 
-<div id="game"></div>
+        function draw() {
+            // Фон (тьма)
+            ctx.fillStyle = 'black';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-<script>
-function start(){
-  document.getElementById("game").innerHTML =
-  "🌑 Ты проснулся в тёмном месте...<br><br>👁 Кто-то наблюдает за тобой...";
+            // Фонарик (градиент)
+            let gradient = ctx.createRadialGradient(player.x, player.y, 10, player.x, player.y, 150);
+            gradient.addColorStop(0, 'rgba(255, 255, 200, 0.4)');
+            gradient.addColorStop(1, 'rgba(0, 0, 0, 1)');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  setTimeout(()=>{
-    document.getElementById("game").innerHTML += "<br><br>💀 БЕГИ";
-    document.body.style.background="darkred";
-  },4000);
-}
-</script>
+            // Игрок (едва виден)
+            ctx.fillStyle = '#333';
+            ctx.fillRect(player.x - 10, player.y - 10, 20, 20);
 
+            // Выход (мигает)
+            if (Math.random() > 0.9) {
+                ctx.fillStyle = 'darkred';
+                ctx.fillRect(exit.x, exit.y, 30, 30);
+            }
+
+            requestAnimationFrame(draw);
+        }
+
+        // Управление (ПК)
+        window.addEventListener('keydown', (e) => {
+            if(e.key === 'ArrowUp') player.y -= player.speed;
+            if(e.key === 'ArrowDown') player.y += player.speed;
+            if(e.key === 'ArrowLeft') player.x -= player.speed;
+            if(e.key === 'ArrowRight') player.x += player.speed;
+            checkScare();
+        });
+
+        // Управление (Телефон)
+        canvas.addEventListener('touchmove', (e) => {
+            player.x = e.touches[0].clientX;
+            player.y = e.touches[0].clientY;
+            checkScare();
+        });
+
+        function checkScare() {
+            let dist = Math.hypot(player.x - exit.x, player.y - exit.y);
+            if (dist < 30) alert("ТЫ ВЫЖИЛ...");
+        }
+
+        draw();
+    </script>
 </body>
 </html>
