@@ -8,7 +8,7 @@ body {
     overflow: hidden; 
     user-select: none; 
     touch-action: manipulation;
-    transition: background 1.5s ease; /* Для плавной смены фонов локаций */
+    transition: background 1.5s ease;
 }
 
 /* ПОЛОСКА ОПЫТА */
@@ -38,6 +38,8 @@ body {
     background: rgba(26, 26, 26, 0.9);
     border-bottom: 2px solid #333;
     z-index: 100;
+    height: 60px;
+    box-sizing: border-box;
 }
 
 .stat {
@@ -59,16 +61,21 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start; /* ИЗМЕНЕНО: контент идет сверху вниз */
     position: relative;
-    padding-bottom: 80px; /* Место для нижнего меню */
+    overflow: hidden; /* Чтобы сам экран не скроллился, только список */
+    padding-top: 20px;
+}
+
+/* Для главного экрана оставляем центрирование */
+#screen-mine {
+    justify-content: center;
 }
 
 .hidden { display: none !important; }
 
 /* РУДА (ЦЕНТР) */
 .mine-area {
-    flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -89,7 +96,80 @@ body {
     50% { transform: translateY(-20px); }
 }
 
-/* ЧАСТИЦЫ (Particles) */
+/* МАГАЗИН И СПИСКИ (ФИКС СКРОЛЛА) */
+.scrollable {
+    width: 100%;
+    max-width: 450px;
+    overflow-y: auto; /* ВКЛЮЧАЕМ СКРОЛЛ */
+    padding: 10px 20px 100px 20px; /* Отступ снизу больше, чтобы меню не мешало */
+    box-sizing: border-box;
+    -webkit-overflow-scrolling: touch; /* Плавный скролл на iOS */
+}
+
+/* Стилизация скроллбара (по желанию) */
+.scrollable::-webkit-scrollbar {
+    width: 4px;
+}
+.scrollable::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 10px;
+}
+
+.item {
+    background: #1e1e1e;
+    margin-bottom: 12px;
+    padding: 15px;
+    border-radius: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-left: 4px solid gold;
+    flex-shrink: 0; /* Чтобы элементы не сжимались */
+}
+
+.item button {
+    padding: 10px 15px;
+    background: #27ae60;
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.item button:disabled {
+    background: #444;
+    opacity: 0.5;
+}
+
+/* НИЖНЕЕ МЕНЮ */
+.bottom-menu {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    height: 70px;
+    background: #1a1a1a;
+    display: flex;
+    border-top: 2px solid #333;
+    z-index: 1000;
+}
+
+.bottom-menu button {
+    flex: 1;
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 24px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.bottom-menu button:hover {
+    color: gold;
+    transform: translateY(-3px);
+}
+
+/* ЭФФЕКТЫ (ЧАСТИЦЫ, ЛИХОРАДКА И Т.Д.) */
 .particle {
     position: fixed;
     background: gold;
@@ -104,7 +184,6 @@ body {
     100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
 }
 
-/* ВСПЛЫВАЮЩИЕ ЦИФРЫ */
 .pop {
     position: fixed;
     pointer-events: none;
@@ -125,7 +204,6 @@ body {
     100% { opacity: 0; transform: translate(-50%, -120px) scale(1.3); }
 }
 
-/* ЛИХОРАДКА (FRENZY) */
 #frenzy-container {
     position: fixed;
     top: 50%; left: 50%;
@@ -155,7 +233,6 @@ body {
     100% { filter: hue-rotate(360deg) brightness(1.5); }
 }
 
-/* ТРЯСКА ЭКРАНА */
 .shake { animation: shakeAnim 0.2s ease-in-out; }
 
 @keyframes shakeAnim {
@@ -164,77 +241,10 @@ body {
     75% { transform: translateX(10px); }
 }
 
-/* НИЖНЕЕ МЕНЮ НАВИГАЦИИ */
-.bottom-menu {
-    position: fixed;
-    bottom: 0;
-    width: 100%;
-    height: 70px;
-    background: #1a1a1a;
-    display: flex;
-    border-top: 2px solid #333;
-    z-index: 1000;
-}
+/* ПРОЧЕЕ */
+.wheel-box { text-align: center; margin-top: 50px; }
+#wheel-visual { font-size: 100px; margin: 20px; display: inline-block; }
 
-.bottom-menu button {
-    flex: 1;
-    background: none;
-    border: none;
-    color: #888;
-    font-size: 24px;
-    cursor: pointer;
-    transition: 0.2s;
-}
-
-.bottom-menu button:hover {
-    color: gold;
-    transform: translateY(-3px);
-}
-
-/* МАГАЗИН И СПИСКИ */
-.scrollable {
-    width: 100%;
-    max-width: 450px;
-    overflow-y: auto;
-    padding: 10px;
-    box-sizing: border-box;
-}
-
-.item {
-    background: #1e1e1e;
-    margin-bottom: 12px;
-    padding: 15px;
-    border-radius: 12px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-left: 4px solid gold;
-}
-
-.item button {
-    padding: 10px 15px;
-    background: #27ae60;
-    border: none;
-    border-radius: 8px;
-    color: white;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-.item button:disabled {
-    background: #444;
-    opacity: 0.5;
-}
-
-/* КОЛЕСО УДАЧИ */
-.wheel-box { text-align: center; }
-#wheel-visual {
-    font-size: 100px;
-    margin: 20px;
-    display: inline-block;
-}
-
-/* БОНУСНЫЙ ПОДАРОК */
 .bonus {
     position: fixed;
     left: -60px;
