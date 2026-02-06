@@ -1,4 +1,4 @@
-// 1. ИНИЦИАЛИЗАЦИЯ СОСТОЯНИЯ (добавлены новые поля)
+// 1. ИНИЦИАЛИЗАЦИЯ СОСТОЯНИЯ (добавлены новые поля для обновления)
 let state = {
     money: 0,
     gps: 0,
@@ -11,7 +11,14 @@ let state = {
     totalClicks: 0,
     unlockedAchievements: [],
     lastWheelSpin: 0,
-    frenzyActive: false
+    frenzyActive: false,
+    // --- НОВЫЕ ПОЛЯ ОБНОВЛЕНИЯ ---
+    prestigeCrystals: 0,
+    prestigeMultiplier: 1,
+    skills: { activity: 0, automation: 0, luck: 0 },
+    currentPet: null,
+    unlockedPets: [],
+    currentLocationIndex: 0
 };
 
 // Конфигурация достижений
@@ -20,6 +27,13 @@ const ACHIEVEMENTS = [
     { id: 'click_1000', name: 'Работяга', desc: '1,000 кликов', goal: 1000, type: 'clicks', bonus: 1.2 },
     { id: 'money_100k', name: 'Миллионер?', desc: 'Накопить 100,000', goal: 100000, type: 'money', bonus: 1.5 }
 ];
+
+// Конфигурация навыков
+const SKILLS_CONFIG = {
+    activity: { name: "Сила Клика", icon: "⚔️", desc: "+20% к клику" },
+    automation: { name: "Авто-Шахтеры", icon: "🤖", desc: "+15% к GPS" },
+    luck: { name: "Удача", icon: "🍀", desc: "+10% шанс крита" }
+};
 
 // 2. ЗАПУСК
 function init() {
@@ -34,6 +48,8 @@ function init() {
     updateDisplay();
     renderShop();
     renderAchievements();
+    renderSkills(); // Рендерим навыки
+    updatePetVisual(); // Показываем питомца
     startLoops();
     spawnBonus();
     checkWheelStatus();
@@ -50,7 +66,6 @@ function createParticles(x, y) {
         p.style.width = size + 'px';
         p.style.height = size + 'px';
         
-        // Случайное направление разлета
         const tx = (Math.random() - 0.5) * 200;
         const ty = (Math.random() - 0.5) * 200;
         p.style.setProperty('--tx', `${tx}px`);
@@ -72,7 +87,7 @@ function startFrenzy() {
     setTimeout(() => {
         state.frenzyActive = false;
         document.body.classList.remove('frenzy-mode');
-    }, 10000); // Длится 10 секунд
+    }, 10000); 
 }
 
 // 5. КЛИК ПО РУДЕ
@@ -80,17 +95,23 @@ function handleMine(e) {
     state.totalClicks++;
     createParticles(e.clientX, e.clientY);
 
-    const isCrit = Math.random() < 0.1;
+    // Учет навыка Удачи для крита
+    const critChance = 0.1 + (state.skills.luck * 0.05);
+    const isCrit = Math.random() < critChance;
+    
     let multiplier = isCrit ? 5 : 1;
-    if (state.frenzyActive) multiplier *= 10; // Множитель лихорадки
+    if (state.frenzyActive) multiplier *= 10; 
 
-    // Учет бонусов от достижений
-    let achievementMultiplier = 1;
+    // Учет бонусов от достижений и ПРЕСТИЖА
+    let totalMultiplier = state.prestigeMultiplier;
     ACHIEVEMENTS.forEach(ach => {
-        if (state.unlockedAchievements.includes(ach.id)) achievementMultiplier *= ach.bonus;
+        if (state.unlockedAchievements.includes(ach.id)) totalMultiplier *= ach.bonus;
     });
 
-    const amount = state.clickPower * multiplier * achievementMultiplier;
+    // Учет навыка активности
+    const activityBonus = 1 + (state.skills.activity * 0.2);
+    
+    const amount = state.clickPower * multiplier * totalMultiplier * activityBonus;
 
     state.money += amount;
     state.exp += amount;
@@ -138,7 +159,7 @@ function renderAchievements() {
     }).join('');
 }
 
-// 7. КОЛЕСО ФОРТУНЫ
+// 7. КОЛЕСО ФОРТУНЫ (Обновлено: шанс выбить питомца)
 function spinWheel() {
     const now = Date.now();
     if (now - state.lastWheelSpin < 86400000) return;
@@ -151,9 +172,18 @@ function spinWheel() {
     document.getElementById('spin-btn').disabled = true;
 
     setTimeout(() => {
-        const win = state.gps * 600 + 500; // Выигрыш: 10 минут дохода
-        state.money += win;
-        alert(`Поздравляем! Вы выиграли ${Math.floor(win).toLocaleString()} 💰`);
+        const rand = Math.random();
+        if (rand < 0.1 && !state.unlockedPets.includes('bat')) { // 10% шанс на питомца
+            state.unlockedPets.push('bat');
+            state.currentPet = 'bat';
+            alert("✨ НЕВЕРОЯТНО! Вы выбили питомца: Летучая мышь! ✨");
+            updatePetVisual();
+        } else {
+            const win = state.gps * 600 + 500;
+            state.money += win;
+            alert(`Выигрыш: ${Math.floor(win).toLocaleString()} 💰`);
+        }
+        
         visual.style.transform = `rotate(0deg)`;
         visual.style.transition = "none";
         checkWheelStatus();
@@ -177,23 +207,126 @@ function checkWheelStatus() {
     }
 }
 
-// 8. ЛОКАЦИИ (Смена фона)
+// 8. ЛОКАЦИИ (Обновлено: БИОМЫ)
 function updateBackground() {
     const lvl = state.level;
-    let color = "#0f0f0f"; // Пещера
-    if (lvl > 10) color = "#1a0f2e"; // Кристальная шахта
-    if (lvl > 20) color = "#0f2e1a"; // Изумрудный разлом
-    if (lvl > 30) color = "#2e1a0f"; // Адское ядро
+    let color = "#0f0f0f"; 
+    if (lvl >= 10) color = "#b8860b"; // Золотой прииск
+    if (lvl >= 20) color = "#4b0082"; // Кристальная пещера
+    if (lvl >= 50) color = "#8b0000"; // Марсианское ядро
     document.body.style.background = color;
 }
 
-// --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ (из прошлой версии) ---
+// --- НОВАЯ СИСТЕМА ПРЕСТИЖА И НАВЫКОВ ---
+
+function doPrestige() {
+    if (state.level < 100) {
+        alert("Престиж доступен только с 100 уровня!");
+        return;
+    }
+    const crystals = Math.floor(state.level / 10);
+    if (confirm(`Перерождение даст вам ${crystals} 🔮 Кристаллов Тьмы, но обнулит золото и шахтеров. Уверены?`)) {
+        state.prestigeCrystals += crystals;
+        state.prestigeMultiplier = 1 + (state.prestigeCrystals * 0.1);
+        
+        // Сброс прогресса
+        state.money = 0;
+        state.gps = 0;
+        state.level = 1;
+        state.exp = 0;
+        state.nextLevelExp = 100;
+        state.inventory = {};
+        state.clickPower = 1;
+        
+        saveGame();
+        location.reload();
+    }
+}
+
+function renderSkills() {
+    const container = document.getElementById('skills-list');
+    if (!container) return;
+    
+    container.innerHTML = Object.keys(SKILLS_CONFIG).map(key => {
+        const skill = SKILLS_CONFIG[key];
+        const level = state.skills[key];
+        const cost = (level + 1) * 2;
+        return `
+            <div class="item" style="border-left-color: #bc13fe">
+                <div class="info">
+                    <b>${skill.icon} ${skill.name}</b> [Ур. ${level}]<br>
+                    <small>${skill.desc}</small>
+                </div>
+                <button onclick="upgradeSkill('${key}')" ${state.prestigeCrystals < cost ? 'disabled' : ''}>
+                    ${cost} 🔮
+                </button>
+            </div>
+        `;
+    }).join('');
+    
+    const crystalDisplay = document.getElementById('crystals-count');
+    if (crystalDisplay) crystalDisplay.innerText = state.prestigeCrystals;
+    const bonusDisplay = document.getElementById('prestige-bonus');
+    if (bonusDisplay) bonusDisplay.innerText = Math.round((state.prestigeMultiplier - 1) * 100);
+}
+
+function upgradeSkill(key) {
+    const cost = (state.skills[key] + 1) * 2;
+    if (state.prestigeCrystals >= cost) {
+        state.prestigeCrystals -= cost;
+        state.skills[key]++;
+        renderSkills();
+        saveGame();
+        updateDisplay();
+    }
+}
+
+// --- СЛУЧАЙНЫЕ СОБЫТИЯ (Гоблин) ---
+
+function spawnGoblin() {
+    const layer = document.getElementById('event-layer');
+    if (!layer) return;
+    
+    const goblin = document.createElement('div');
+    goblin.innerHTML = "👺";
+    goblin.style.cssText = `
+        position: absolute; font-size: 60px; left: -100px; 
+        top: ${Math.random() * 60 + 20}%; transition: left 4s linear; 
+        cursor: pointer; pointer-events: auto; z-index: 2600;
+    `;
+    layer.appendChild(goblin);
+    
+    let clicks = 0;
+    goblin.onclick = () => {
+        clicks++;
+        createPop(parseInt(goblin.style.left) + 50, parseInt(goblin.style.top), "УДАР!", "crit");
+        if (clicks >= 3) {
+            const reward = (state.gps * 60) + 1000;
+            state.money += reward;
+            createPop(window.innerWidth/2, window.innerHeight/2, `Гоблин побежден! +${Math.floor(reward)}💰`, "crit");
+            goblin.remove();
+        }
+    };
+    
+    setTimeout(() => { goblin.style.left = "110%"; }, 100);
+    setTimeout(() => { if (goblin.parentNode) goblin.remove(); }, 4100);
+}
+
+// --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ---
+
+function updatePetVisual() {
+    const slot = document.getElementById('pet-slot');
+    if (!slot) return;
+    if (state.currentPet === 'bat') slot.innerText = "🦇";
+    else if (state.currentPet === 'mole') slot.innerText = "🐹";
+}
 
 function calculateOfflineProgress() {
     const now = Date.now();
     const diff = Math.floor((now - state.lastSaveTime) / 1000);
     if (diff > 10 && state.gps > 0) {
-        const gained = diff * state.gps * 0.5;
+        let petBonus = (state.currentPet === 'bat') ? 0.1 : 0; // Питомец дает +10% к офлайну
+        const gained = diff * state.gps * (0.5 + petBonus);
         state.money += gained;
         setTimeout(() => alert(`Офлайн доход: ${Math.floor(gained).toLocaleString()} 💰`), 1000);
     }
@@ -213,7 +346,8 @@ function checkLevelUp() {
 
 function updateOreVisual() {
     const ore = document.getElementById('ore');
-    if (ore && ORES) ore.innerText = ORES[(state.level - 1) % ORES.length];
+    const ores = ["🪨", "🪙", "💎", "☄️", "💠"];
+    if (ore) ore.innerText = ores[(state.level - 1) % ores.length];
 }
 
 function buy(id) {
@@ -223,8 +357,12 @@ function buy(id) {
     if (state.money >= cost) {
         state.money -= cost;
         state.inventory[id] = count + 1;
-        if (item.type === 'auto') state.gps += item.income;
+        
+        // Автоматизация (Навык)
+        const autoBonus = 1 + (state.skills.automation * 0.15);
+        if (item.type === 'auto') state.gps += (item.income * autoBonus);
         else state.clickPower += item.power;
+        
         renderShop();
         updateDisplay();
         saveGame();
@@ -251,7 +389,6 @@ function updateDisplay() {
     document.getElementById('lvl-text').innerText = state.level;
     document.getElementById('exp-bar').style.width = (state.exp / state.nextLevelExp * 100) + '%';
     
-    // Подсветка кнопок магазина
     const btns = document.querySelectorAll('#shop-list button');
     UPGRADES.forEach((item, i) => {
         const cost = Math.floor(item.baseCost * Math.pow(1.15, state.inventory[item.id] || 0));
@@ -262,7 +399,12 @@ function updateDisplay() {
 function startLoops() {
     setInterval(() => { state.money += state.gps / 10; updateDisplay(); }, 100);
     setInterval(() => { state.lastSaveTime = Date.now(); saveGame(); }, 5000);
-    setInterval(() => { if (Math.random() < 0.3) document.getElementById('frenzy-container').classList.remove('hidden'); }, 60000);
+    
+    // Случайные события
+    setInterval(() => { 
+        if (Math.random() < 0.2) document.getElementById('frenzy-container').classList.remove('hidden'); 
+        if (Math.random() < 0.1) spawnGoblin(); 
+    }, 30000);
 }
 
 function createPop(x, y, txt, cls) {
@@ -292,11 +434,12 @@ function spawnBonus() {
 }
 
 function changeScreen(s) {
-    const screens = ['screen-mine', 'screen-shop', 'screen-achievements', 'screen-wheel'];
+    const screens = ['screen-mine', 'screen-shop', 'screen-achievements', 'screen-wheel', 'screen-prestige'];
     screens.forEach(id => {
         const el = document.getElementById(id);
         if (el) el.classList.toggle('hidden', id !== `screen-${s}`);
     });
+    if (s === 'prestige') renderSkills();
 }
 
 init();
