@@ -22,6 +22,26 @@ function saveGame() {
             unlockedAchievements: state.unlockedAchievements,
             lastWheelSpin: state.lastWheelSpin,
             
+            // --- ДОПОЛНЕНИЯ ДЛЯ ОБНОВЛЕНИЯ ---
+            
+            // Престиж и Кристаллы
+            prestigeCrystals: state.prestigeCrystals || 0,
+            prestigeMultiplier: state.prestigeMultiplier || 1,
+            
+            // Навыки (Skills)
+            skills: state.skills || {
+                activity: 0,    // Ветка Активности
+                automation: 0,  // Ветка Автоматизации
+                luck: 0         // Ветка Удачи
+            },
+            
+            // Питомцы
+            currentPet: state.currentPet || null, // ID активного питомца
+            unlockedPets: state.unlockedPets || [], // Список открытых питомцев
+            
+            // Локации
+            currentLocationIndex: state.currentLocationIndex || 0,
+            
             // Время для офлайн-дохода
             lastSaveTime: Date.now() 
         };
@@ -45,6 +65,7 @@ function loadGame() {
         
         // Базовая валидация, чтобы не загрузить пустой файл
         if (parsed && typeof parsed.money === 'number') {
+            console.log("Данные успешно загружены.");
             return parsed;
         }
         return null;
@@ -61,5 +82,23 @@ function resetProgress() {
     if (confirm("Внимание! Весь ваш прогресс, достижения и золото будут удалены безвозвратно. Продолжить?")) {
         localStorage.removeItem(DB_NAME);
         location.reload(); 
+    }
+}
+
+/**
+ * Специальная функция для сохранения ТОЛЬКО после Престижа 
+ * (чтобы сбросить ресурсы, но оставить кристаллы и навыки)
+ */
+function savePrestigeData(crystalsGained) {
+    const currentData = loadGame();
+    if (currentData) {
+        currentData.prestigeCrystals = (currentData.prestigeCrystals || 0) + crystalsGained;
+        currentData.money = 0;
+        currentData.level = 1;
+        currentData.exp = 0;
+        currentData.inventory = []; // Сброс купленных шахтеров
+        currentData.gps = 0;
+        
+        localStorage.setItem(DB_NAME, JSON.stringify(currentData));
     }
 }
