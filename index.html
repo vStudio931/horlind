@@ -14,6 +14,8 @@
         <div id="exp-bar"></div>
     </div>
 
+    <div id="event-layer" style="position: fixed; width: 100%; height: 100%; pointer-events: none; z-index: 2500;"></div>
+
     <div id="frenzy-container" class="hidden" onclick="startFrenzy()">
         🔥 ЛИХОРАДКА! 🔥
     </div>
@@ -29,6 +31,7 @@
             <div class="mine-area">
                 <div id="ore" onclick="handleMine(event)">💎</div>
             </div>
+            <div id="pet-slot" style="position: absolute; bottom: 100px; left: 20px; font-size: 40px; filter: drop-shadow(0 0 5px gold);"></div>
         </div>
 
         <div id="screen-shop" class="screen hidden">
@@ -56,11 +59,30 @@
             </div>
         </div>
 
+        <div id="screen-prestige" class="screen hidden">
+            <div class="header-area">
+                <h2>ПРЕСТИЖ</h2>
+            </div>
+            <div class="scrollable" style="text-align: center;">
+                <div style="background: #1a1a1a; padding: 20px; border-radius: 15px; margin-bottom: 20px; border: 1px solid #4b0082;">
+                    <p>Кристаллы Тьмы: <span id="crystals-count" style="color: #bc13fe; font-weight: bold;">0</span> 🔮</p>
+                    <p>Бонус дохода: <span id="prestige-bonus">0</span>%</p>
+                    <button class="nav-btn" onclick="doPrestige()" style="background: #4b0082; color: white;">ПЕРЕРОЖДЕНИЕ</button>
+                    <p style="font-size: 0.8rem; color: #888; margin-top: 10px;">Доступно с 100 уровня. Сбросит всё, кроме кристаллов и навыков.</p>
+                </div>
+
+                <h3>ДЕРЕВО НАВЫКОВ</h3>
+                <div id="skills-list">
+                    </div>
+            </div>
+        </div>
+
         <nav class="bottom-menu">
             <button onclick="changeScreen('mine')" title="Добыча">⛏️</button>
             <button onclick="changeScreen('shop')" title="Магазин">🛒</button>
             <button onclick="changeScreen('achievements')" title="Достижения">🏆</button>
             <button onclick="changeScreen('wheel')" title="Удача">🎡</button>
+            <button onclick="changeScreen('prestige')" title="Развитие">🔮</button>
         </nav>
     </div>
 
